@@ -26,7 +26,13 @@ export default function RootLayout({
               <Link href="/profile" className="text-white hover:text-blue-200 transition-colors font-medium">
                 Profile
               </Link>
+            </li>            
+            <li>
+              <Link href="/services" className="text-white hover:text-blue-200 transition-colors font-medium">
+                Services
+              </Link>
             </li>
+            
           </ul>
         </nav>
         {children}
