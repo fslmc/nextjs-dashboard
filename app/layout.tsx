@@ -1,11 +1,12 @@
-import '@/app/ui/global.css'
-import Link from 'next/link';
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+import '@/app/ui/global.css';
+import Link from 'next/link';
+import getServerSession from "next-auth";
+import {authOptions} from "@/app/api/auth/[...nextauth]/route";
+import { headers } from "next/headers";
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const session = await getServerSession(authOptions);
   return (
     <html lang="en">
       <body>
@@ -26,13 +27,19 @@ export default function RootLayout({
               <Link href="/profile" className="text-white hover:text-blue-200 transition-colors font-medium">
                 Profile
               </Link>
-            </li>            
+            </li>
             <li>
               <Link href="/services" className="text-white hover:text-blue-200 transition-colors font-medium">
                 Services
               </Link>
             </li>
-            
+            <li>
+              {session?.user ? (
+                <Link href="/profile" className="text-white font-medium">{session.user.name}</Link>
+              ) : (
+                <Link href="/signin" className="text-white font-medium">Sign In</Link>
+              )}
+            </li>
           </ul>
         </nav>
         {children}
