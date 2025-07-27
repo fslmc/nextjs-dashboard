@@ -4,6 +4,9 @@ import Link from 'next/link';
 import getServerSession from "next-auth";
 import {authOptions} from "@/app/api/auth/[...nextauth]/route";
 import { headers } from "next/headers";
+import dynamic from "next/dynamic";
+
+const SignOutButton = dynamic(() => import("@/app/ui/signout-button"), { ssr: false });
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
@@ -35,7 +38,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </li>
             <li>
               {session?.user ? (
-                <Link href="/profile" className="text-white font-medium">{session.user.name}</Link>
+                <>
+                  <Link href="/profile" className="text-white font-medium mr-2">{session.user.name}</Link>
+                  <SignOutButton />
+                </>
               ) : (
                 <Link href="/signin" className="text-white font-medium">Sign In</Link>
               )}
