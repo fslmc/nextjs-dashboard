@@ -8,46 +8,53 @@ export const authOptions = {
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "email", placeholder: "jsmith@example.com" },
-        password: { label: "Password", type: "password" }
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
       },
-      async authorize(credentials: Partial<Record<"email" | "password", unknown>>) {
-        const email = typeof credentials.email === "string" ? credentials.email : undefined;
-        const password = typeof credentials.password === "string" ? credentials.password : undefined;
-        if (!email || !password) return null;
+      authorize: async (credentials, req) => {
+        const { email, password } = credentials as {
+          email: string;
+          password: string;
+        };
+
+        if (!email || !password) {
+          return null;
+        }
+
         const user = await prisma.users.findUnique({
-          where: { email }
+          where: { email },
         });
-        if (!user || typeof user.password !== "string") return null;
+
+        if (!user) {
+          return null;
+        }
+
         const isValid = await compare(password, user.password);
-        if (!isValid) return null;
+        if (!isValid) {
+          return null;
+        }
+
         return { id: user.id, name: user.name, email: user.email };
-      }
-    })
+      },
+    }),
   ],
-  session: { strategy: "jwt" as const },
+  session: {
+    strategy: "jwt",
+  },
   pages: {
-    signIn: "/signin"
+    signIn: "/signin",
   },
   callbacks: {
-    async jwt({ token, user }: { token: any; user?: any }) {
-      if (user) {
-        token.id = user.id;
-        token.name = user.name;
-        token.email = user.email;
-      }
-      return token;
-    },
-    async session({ session, token }: { session: any; token: any }) {
+    async session({ session, token }) {
       if (token) {
-        session.user.id = token.id;
-        session.user.name = token.name;
-        session.user.email = token.email;
+
+        session.user.id = token.sub!; // non-null assertion
       }
       return session;
-    }
-  }
+    },
+  },
 };
 
-export const GET = NextAuth(authOptions);
-export const POST = NextAuth(authOptions);
+const handler = NextAuth(authOptions);
+
+export { handler as GET, handler as POST };

@@ -1,54 +1,22 @@
 
 import '@/app/ui/global.css';
-import Link from 'next/link';
-import getServerSession from "next-auth";
-import {authOptions} from "@/app/api/auth/[...nextauth]/route";
-import { headers } from "next/headers";
-import dynamic from "next/dynamic";
+import { ReactNode } from 'react';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { getServerSession } from 'next-auth/next';
+import type { Session } from 'next-auth';
+import AppShell from '@/app/ui/app-shell';
 
-const SignOutButton = dynamic(() => import("@/app/ui/signout-button"), { ssr: false });
-
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const session = await getServerSession(authOptions);
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const session = (await getServerSession(authOptions)) as Session | null;
+  // Ensure session has an expires property for SessionProvider
+  const sessionWithExpires = session && !session.expires
+    ? { ...session, expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString() }
+    : session ?? undefined;
+  const serializedSession = sessionWithExpires ? JSON.parse(JSON.stringify(sessionWithExpires)) : undefined;
   return (
     <html lang="en">
       <body>
-        <nav className="flex items-center justify-between bg-blue-600 px-8 py-4 mb-8 rounded-lg shadow">
-          <div className="text-white text-2xl font-bold">LOREM IPSUM</div>
-          <ul className="flex gap-6">
-            <li>
-              <Link href="/" className="text-white hover:text-blue-200 transition-colors font-medium">
-                Home
-              </Link>
-            </li>
-            <li>
-              <Link href="/portfolio" className="text-white hover:text-blue-200 transition-colors font-medium">
-                Portfolio
-              </Link>
-            </li>
-            <li>
-              <Link href="/profile" className="text-white hover:text-blue-200 transition-colors font-medium">
-                Profile
-              </Link>
-            </li>
-            <li>
-              <Link href="/services" className="text-white hover:text-blue-200 transition-colors font-medium">
-                Services
-              </Link>
-            </li>
-            <li>
-              {session?.user ? (
-                <>
-                  <Link href="/profile" className="text-white font-medium mr-2">{session.user.name}</Link>
-                  <SignOutButton />
-                </>
-              ) : (
-                <Link href="/signin" className="text-white font-medium">Sign In</Link>
-              )}
-            </li>
-          </ul>
-        </nav>
-        {children}
+        <AppShell session={serializedSession}>{children}</AppShell>
       </body>
     </html>
   );
